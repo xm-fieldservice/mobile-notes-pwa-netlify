@@ -1,5 +1,5 @@
 // App shell 缓存（根路径部署）
-const CACHE = 'notes-pwa-netlify-v1';
+const CACHE = 'notes-pwa-netlify-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -19,6 +19,14 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => Promise.all(keys.map((k) => (k !== CACHE ? caches.delete(k) : null)))).then(() => self.clients.claim())
   );
+});
+
+// 接收来自页面的升级指令
+self.addEventListener('message', (event)=>{
+  const data = event.data || {};
+  if (data && data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (e) => {

@@ -253,6 +253,51 @@ function initMinimalPersistenceUI(){
   const btn = qs('#btnVersion');
   const dlg = document.getElementById('version-dialog');
   const pre = dlg?.querySelector('#changelog');
+  const btnCheck = dlg?.querySelector('#btnCheckUpdate');
+  const btnApply = dlg?.querySelector('#btnApplyUpdate');
+
+  function setBadge(on){
+    try {
+      if ('setAppBadge' in navigator && typeof navigator.setAppBadge === 'function'){
+        if (on) navigator.setAppBadge(1); else navigator.clearAppBadge();
+      }
+    } catch {}
+    const vbtn = qs('#btnVersion');
+    if (on) vbtn?.classList.add('has-update'); else vbtn?.classList.remove('has-update');
+    if (btnApply) btnApply.hidden = !on;
+  }
+
+  async function fetchVersion(){
+    try {
+      const r = await fetch('version.json?ts=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+  }
+
+  async function checkUpdate(){
+    const reg = await navigator.serviceWorker.getRegistration();
+    // 触发 SW 更新检查
+    try { await reg?.update(); } catch {}
+    // 版本比对
+    const remote = await fetchVersion();
+    if (remote){
+      // 简易比较：与已加载文本中“当前版本”行比对，或仅以存在新 waiting 为准
+    }
+    // 若有 waiting 直接亮起按钮
+    if (reg?.waiting){ setBadge(true); return; }
+    setBadge(false);
+  }
+
+  async function applyUpdate(){
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg?.waiting){
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      navigator.serviceWorker.addEventListener('controllerchange', ()=> location.reload());
+    } else {
+      await checkUpdate();
+    }
+  }
   btn?.addEventListener('click', async ()=>{
     try {
       const [vres, cres] = await Promise.all([
@@ -279,6 +324,15 @@ function initMinimalPersistenceUI(){
     }
     dlg?.showModal();
   });
+
+  btnCheck?.addEventListener('click', checkUpdate);
+  btnApply?.addEventListener('click', applyUpdate);
+
+  // 应用启动与前台时尝试检查
+  document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) checkUpdate(); });
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.ready.then(()=> checkUpdate());
+  }
 })();
 
 (async function bootstrap(){
