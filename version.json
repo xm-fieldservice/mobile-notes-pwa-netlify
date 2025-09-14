@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "buildTime": "2025-09-14T14:48:00Z",
+  "releases": [
+    {
+      "version": "0.2.0",
+      "date": "2025-09-14",
+      "features": [
+        "新增：本地持久化（IndexedDB），支持重启后浏览历史笔记",
+        "新增：版本记录弹窗（顶部“版本”按钮）",
+        "优化：Netlify 自动部署（Git 驱动），_headers 与 netlify.toml 缓存/安全头"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "date": "2025-09-14",
+      "features": [
+        "初始：PWA 原型（manifest + SW），三向抽屉导航与基础样式"
+      ]
+    }
+  ]
+}

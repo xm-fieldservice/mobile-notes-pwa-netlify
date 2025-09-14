@@ -15,6 +15,7 @@
     <button id="btnTopMenu" aria-label="打开顶部菜单" aria-controls="top-drawer" aria-expanded="false">☰</button>
     <h1 class="app-title">笔记</h1>
     <div class="spacer"></div>
+    <button id="btnVersion" aria-label="查看版本记录">版本</button>
     <button id="btnRightMenu" aria-label="打开右侧菜单" aria-controls="right-drawer" aria-expanded="false">≡</button>
   </header>
 
@@ -67,6 +68,17 @@
   </section>
 
   <div id="backdrop" class="backdrop" hidden></div>
+
+  <!-- 版本记录弹窗 -->
+  <dialog id="version-dialog" style="max-width:96vw; width:720px; border:1px solid rgba(255,255,255,.12); background:#0b1224; color:#e5e7eb; border-radius:12px; padding:0;">
+    <form method="dialog" style="display:flex; flex-direction:column; gap:.5rem; padding:.75rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
+        <h3 id="version-title" style="margin:.25rem 0; font-size:1.05rem;">版本记录</h3>
+        <button value="cancel" aria-label="关闭">×</button>
+      </div>
+      <pre id="changelog" style="white-space:pre-wrap; background:#0b1020; border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:.75rem; max-height:60vh; overflow:auto;">加载中…</pre>
+    </form>
+  </dialog>
 
   <main class="content" role="main">
     <ul class="note-list" aria-label="笔记列表">

@@ -249,6 +249,38 @@ function initMinimalPersistenceUI(){
   });
 }
 
+(function initVersionLog(){
+  const btn = qs('#btnVersion');
+  const dlg = document.getElementById('version-dialog');
+  const pre = dlg?.querySelector('#changelog');
+  btn?.addEventListener('click', async ()=>{
+    try {
+      const [vres, cres] = await Promise.all([
+        fetch('version.json', { cache: 'no-cache' }),
+        fetch('CHANGELOG.md', { cache: 'no-cache' })
+      ]);
+      let text = '';
+      if (vres.ok) {
+        const v = await vres.json();
+        text += `当前版本: ${v.version}\n构建时间: ${v.buildTime}\n\n`;
+        if (Array.isArray(v.releases)) {
+          for (const r of v.releases) {
+            text += `## ${r.version} - ${r.date}\n- ${Array.isArray(r.features)? r.features.join('\n- '): ''}\n\n`;
+          }
+        }
+      }
+      if (cres.ok) {
+        const ctext = await cres.text();
+        text += `\n==== CHANGELOG ====:\n\n${ctext}`;
+      }
+      if (pre) pre.textContent = text || '暂无版本记录';
+    } catch (e) {
+      if (pre) pre.textContent = '加载版本记录失败';
+    }
+    dlg?.showModal();
+  });
+})();
+
 (async function bootstrap(){
   if(!window.DB){
     console.warn('DB 未就绪，持久化不可用');
