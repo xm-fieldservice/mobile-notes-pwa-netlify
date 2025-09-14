@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Mobile Notes PWA</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <button id="btnTopMenu" aria-label="打开顶部菜单" aria-controls="top-drawer" aria-expanded="false">☰</button>
+    <h1 class="app-title">笔记</h1>
+    <div class="spacer"></div>
+    <button id="btnRightMenu" aria-label="打开右侧菜单" aria-controls="right-drawer" aria-expanded="false">≡</button>
+  </header>
+
+  <!-- 手势边缘探测区域 -->
+  <div class="edge-left" aria-hidden="true"></div>
+  <div class="edge-right" aria-hidden="true"></div>
+  <div class="edge-top" aria-hidden="true"></div>
+
+  <nav id="left-drawer" class="drawer drawer-left" aria-hidden="true" aria-label="导航">
+    <div class="drawer-header">
+      <h2>导航</h2>
+      <button class="btn-close" data-close="#left-drawer" aria-label="关闭左侧菜单">×</button>
+    </div>
+    <ul class="menu">
+      <li><a href="#">全部笔记</a></li>
+      <li><a href="#">收藏</a></li>
+      <li><a href="#">标签</a></li>
+      <li><a href="#">设置</a></li>
+    </ul>
+  </nav>
+
+  <aside id="right-drawer" class="drawer drawer-right" aria-hidden="true" aria-label="工具">
+    <div class="drawer-header">
+      <h2>工具</h2>
+      <button class="btn-close" data-close="#right-drawer" aria-label="关闭右侧菜单">×</button>
+    </div>
+    <div class="tools">
+      <label>
+        <input type="checkbox" /> 仅显示未归档
+      </label>
+      <label>
+        排序
+        <select>
+          <option>最近修改</option>
+          <option>标题</option>
+        </select>
+      </label>
+    </div>
+  </aside>
+
+  <section id="top-drawer" class="drawer drawer-top" aria-hidden="true" aria-label="快速操作">
+    <div class="drawer-header">
+      <h2>快速操作</h2>
+      <button class="btn-close" data-close="#top-drawer" aria-label="关闭顶部菜单">×</button>
+    </div>
+    <div class="quick-actions">
+      <input id="search" type="search" placeholder="搜索笔记…" aria-label="搜索笔记" />
+      <button id="newNote">新建笔记</button>
+    </div>
+  </section>
+
+  <div id="backdrop" class="backdrop" hidden></div>
+
+  <main class="content" role="main">
+    <ul class="note-list" aria-label="笔记列表">
+      <li class="note-item">
+        <h3>欢迎使用</h3>
+        <p>这是一个移动端 PWA 笔记应用的页面原型示例。支持左/右/顶部滑动抽屉菜单。</p>
+      </li>
+      <li class="note-item">
+        <h3>离线可用</h3>
+        <p>安装到主屏幕后可离线访问，数据存储与同步后续添加。</p>
+      </li>
+    </ul>
+  </main>
+
+  <footer class="bottombar" role="contentinfo">
+    <button id="btnLeftMenu" aria-label="打开左侧菜单" aria-controls="left-drawer" aria-expanded="false">☰ 分类</button>
+    <button id="btnTopMenu2" aria-label="打开顶部菜单" aria-controls="top-drawer" aria-expanded="false">＋ 新建</button>
+    <button id="installPWA" aria-label="安装为应用" hidden>安装应用</button>
+  </footer>
+
+  <script src="db.js" type="module"></script>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

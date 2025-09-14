@@ -1,0 +1,66 @@
+:root{
+  --bg:#0b1020;
+  --fg:#e5e7eb;
+  --muted:#94a3b8;
+  --brand:#22c55e;
+  --card:#111827;
+  --shadow: rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  color:var(--fg);
+  background:linear-gradient(180deg,#0f172a 0%, #0b1020 100%);
+}
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:.5rem;
+  padding: .5rem .75rem; backdrop-filter:saturate(1.2) blur(6px);
+  background:rgba(15,23,42,.7);
+  border-bottom:1px solid rgba(255,255,255,.06)
+}
+.topbar .app-title{font-size:1.1rem;margin:0}
+.topbar .spacer{flex:1}
+button{background:#1f2937;color:var(--fg);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.5rem .75rem}
+button:active{transform:scale(.98)}
+
+.content{padding: .75rem; padding-bottom: 4.5rem}
+.note-list{list-style:none; margin:0; padding:0; display:grid; gap:.75rem}
+.note-item{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:.75rem; box-shadow:0 10px 30px var(--shadow)}
+.note-item h3{margin:.15rem 0 .25rem 0; font-size:1rem}
+.note-item p{margin:.25rem 0; color:var(--muted); line-height:1.5}
+
+.bottombar{
+  position:fixed; bottom:0; left:0; right:0; z-index:40;
+  display:flex; gap:.5rem; justify-content:space-around;
+  padding:.5rem; background:rgba(15,23,42,.85); border-top:1px solid rgba(255,255,255,.06);
+  backdrop-filter:saturate(1.2) blur(6px);
+}
+
+/* Drawers */
+.drawer{position:fixed; z-index:50; background:rgba(17,24,39,.98); color:var(--fg); width:80vw; max-width:360px; height:100dvh; box-shadow:0 16px 40px var(--shadow); border:1px solid rgba(255,255,255,.06)}
+.drawer-header{display:flex; align-items:center; justify-content:space-between; padding:.75rem; border-bottom:1px solid rgba(255,255,255,.06)}
+.menu{list-style:none;margin:0;padding:.25rem .5rem}
+.menu li a{display:block; padding:.75rem; color:var(--fg); text-decoration:none; border-radius:10px}
+.menu li a:active{background:rgba(255,255,255,.06)}
+
+.drawer-left{left:0; top:0; transform:translateX(-100%)}
+.drawer-right{right:0; top:0; transform:translateX(100%)}
+.drawer-top{left:0; right:0; top:0; height:50dvh; width:100vw; max-width:none; transform:translateY(-100%)}
+
+.drawer.open{transform:translate(0,0)}
+.drawer, .drawer.open{transition:transform 280ms cubic-bezier(.2,.8,.2,1)}
+
+.backdrop{position:fixed; inset:0; background:rgba(0,0,0,.35); backdrop-filter: blur(2px); z-index:45}
+
+/* Edge hit area for gestures */
+.edge-left, .edge-right, .edge-top{position:fixed; z-index:10}
+.edge-left{left:0; top:0; width:18px; height:100dvh}
+.edge-right{right:0; top:0; width:18px; height:100dvh}
+.edge-top{left:0; top:0; width:100vw; height:16px}
+
+.btn-close{background:#111827}
+.quick-actions{display:flex; gap:.5rem; padding:.75rem}
+.quick-actions input{flex:1; padding:.5rem .75rem; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#0b1224; color:var(--fg)}
