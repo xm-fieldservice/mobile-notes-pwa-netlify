@@ -183,36 +183,53 @@ async function reloadNotes(){
 }
 
 function openEditor(initial=''){
-  // 动态创建一个简单的对话框
-  let dlg = document.getElementById('note-editor');
-  if(!dlg){
-    dlg = document.createElement('dialog');
-    dlg.id = 'note-editor';
-    dlg.style.cssText = 'max-width: 96vw; width: 680px; border:1px solid rgba(255,255,255,.15); background:#0b1224; color:#e5e7eb; border-radius:12px; padding:0;';
-    dlg.innerHTML = `
-      <form method="dialog" style="display:flex; flex-direction:column; gap:.5rem; padding: .75rem;">
-        <h3 style="margin:.25rem 0">新建/编辑笔记</h3>
-        <textarea id="note-textarea" style="min-height: 40vh; resize: vertical; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b1020; color:#e5e7eb; padding:.75rem"></textarea>
-        <div style="display:flex; gap:.5rem; justify-content:flex-end;">
-          <button value="cancel">取消</button>
-          <button id="btnSaveNote" value="default" style="background:#22c55e; border-color:#22c55e; color:#0b1020;">保存</button>
-        </div>
-      </form>
-    `;
-    document.body.appendChild(dlg);
+  // 优先使用原生 <dialog>，否则降级为 prompt()
+  const supportsDialog = typeof window.HTMLDialogElement !== 'undefined';
+  if (supportsDialog) {
+    // 动态创建一个简单的对话框
+    let dlg = document.getElementById('note-editor');
+    if(!dlg){
+      dlg = document.createElement('dialog');
+      dlg.id = 'note-editor';
+      dlg.style.cssText = 'max-width: 96vw; width: 680px; border:1px solid rgba(255,255,255,.15); background:#0b1224; color:#e5e7eb; border-radius:12px; padding:0;';
+      dlg.innerHTML = `
+        <form method="dialog" style="display:flex; flex-direction:column; gap:.5rem; padding: .75rem;">
+          <h3 style="margin:.25rem 0">新建/编辑笔记</h3>
+          <textarea id="note-textarea" style="min-height: 40vh; resize: vertical; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b1020; color:#e5e7eb; padding:.75rem"></textarea>
+          <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+            <button value="cancel" type="button" id="btnCancelNote">取消</button>
+            <button id="btnSaveNote" value="default" style="background:#22c55e; border-color:#22c55e; color:#0b1020;">保存</button>
+          </div>
+        </form>
+      `;
+      document.body.appendChild(dlg);
+    }
+    const ta = dlg.querySelector('#note-textarea');
+    ta.value = initial || '';
+    if (typeof dlg.showModal === 'function') {
+      dlg.showModal();
+    } else {
+      // 非常规环境（旧浏览器）降级到 prompt
+      const content = (window.prompt('请输入笔记内容（Markdown）：', initial || '') || '').trim();
+      if(content){ window.DB.addNote(CURRENT_TOPIC.id, content).then(reloadNotes); }
+      return;
+    }
+    const saveBtn = dlg.querySelector('#btnSaveNote');
+    const cancelBtn = dlg.querySelector('#btnCancelNote');
+    saveBtn.onclick = async (e)=>{
+      e.preventDefault();
+      const content = ta.value.trim();
+      if(!content){ dlg.close(); return; }
+      await window.DB.addNote(CURRENT_TOPIC.id, content);
+      dlg.close();
+      await reloadNotes();
+    };
+    cancelBtn.onclick = (e)=>{ e.preventDefault(); dlg.close(); };
+  } else {
+    // 完全不支持 <dialog> 的浏览器使用 prompt() 简易输入
+    const content = (window.prompt('请输入笔记内容（Markdown）：', initial || '') || '').trim();
+    if(content){ window.DB.addNote(CURRENT_TOPIC.id, content).then(reloadNotes); }
   }
-  const ta = dlg.querySelector('#note-textarea');
-  ta.value = initial || '';
-  dlg.showModal();
-  const saveBtn = dlg.querySelector('#btnSaveNote');
-  saveBtn.onclick = async (e)=>{
-    e.preventDefault();
-    const content = ta.value.trim();
-    if(!content){ dlg.close(); return; }
-    await window.DB.addNote(CURRENT_TOPIC.id, content);
-    dlg.close();
-    await reloadNotes();
-  };
 }
 
 // 事件：新建与列表操作
@@ -255,6 +272,7 @@ function initMinimalPersistenceUI(){
   const pre = dlg?.querySelector('#changelog');
   const btnCheck = dlg?.querySelector('#btnCheckUpdate');
   const btnApply = dlg?.querySelector('#btnApplyUpdate');
+  const historyList = dlg?.querySelector('#history-list');
 
   function setBadge(on){
     try {
@@ -308,6 +326,28 @@ function initMinimalPersistenceUI(){
       if (vres.ok) {
         const v = await vres.json();
         text += `当前版本: ${v.version}\n构建时间: ${v.buildTime}\n\n`;
+        // 渲染历史版本（只读）
+        if (Array.isArray(v.releases) && historyList){
+          historyList.innerHTML='';
+          for (const r of v.releases.slice(0, 10)){
+            const li = document.createElement('li');
+            li.style.display='flex';
+            li.style.alignItems='center';
+            li.style.justifyContent='space-between';
+            li.style.gap='.5rem';
+            li.innerHTML = `
+              <div style="display:flex; flex-direction:column">
+                <span><strong>${r.version}</strong> · <span style="opacity:.8">${r.date || ''}</span></span>
+                <span style="opacity:.85; font-size:.9em">${Array.isArray(r.features)? r.features[0] || '' : ''}</span>
+              </div>
+              <div style="display:flex; gap:.35rem">
+                <button class="btn-copy-ver" data-version="${r.version}">复制版本</button>
+                <button class="btn-open-changelog">查看说明</button>
+              </div>
+            `;
+            historyList.appendChild(li);
+          }
+        }
         if (Array.isArray(v.releases)) {
           for (const r of v.releases) {
             text += `## ${r.version} - ${r.date}\n- ${Array.isArray(r.features)? r.features.join('\n- '): ''}\n\n`;
@@ -323,6 +363,21 @@ function initMinimalPersistenceUI(){
       if (pre) pre.textContent = '加载版本记录失败';
     }
     dlg?.showModal();
+  });
+
+  // 历史列表的事件代理
+  historyList?.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    if (btn.classList.contains('btn-copy-ver')){
+      const ver = btn.getAttribute('data-version') || '';
+      navigator.clipboard.writeText(ver).then(()=>{
+        btn.textContent='已复制'; setTimeout(()=> btn.textContent='复制版本', 1000);
+      });
+    } else if (btn.classList.contains('btn-open-changelog')){
+      // 打开根目录 CHANGELOG.md（如无则展示版本记录区域）
+      window.open('CHANGELOG.md', '_blank');
+    }
   });
 
   btnCheck?.addEventListener('click', checkUpdate);
