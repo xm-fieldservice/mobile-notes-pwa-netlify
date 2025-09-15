@@ -75,6 +75,10 @@
 
   <div id="backdrop" class="backdrop" hidden></div>
 
+  <!-- 全局悬浮调试按钮（高 z-index，避免被遮挡） -->
+  <button id="devFab" aria-label="一键进入调试通道"
+    style="position:fixed; right:72px; top:10px; z-index:1000; background:#7c3aed; border-color:#7c3aed;">调试</button>
+
   <!-- 版本记录弹窗 -->
   <dialog id="version-dialog" style="max-width:96vw; width:720px; border:1px solid rgba(255,255,255,.12); background:#0b1224; color:#e5e7eb; border-radius:12px; padding:0;">
     <form method="dialog" style="display:flex; flex-direction:column; gap:.5rem; padding:.75rem;">

@@ -60,19 +60,27 @@ function initButtons() {
   backdrop.addEventListener('click', closeAll);
 
   // 一键调试按钮：进入/退出 dev 模式
-  const devBtn = qs('#btnDevQuick');
-  devBtn?.addEventListener('click', ()=>{
+  function handleDevToggle(){
+    // 如版本弹窗开启，先关闭
+    try{ document.getElementById('version-dialog')?.close?.(); }catch{}
     const u = new URL(location.href);
     const p = u.searchParams;
-    const isDev = p.get('dev') === '1';
+    const isDev = p.get('dev') === '1' || sessionStorage.getItem('DEV_MODE') === '1';
     if (isDev){
+      sessionStorage.removeItem('DEV_MODE');
       p.delete('dev'); p.delete('t'); p.delete('sw');
       location.href = u.pathname + (p.toString()? ('?'+p.toString()): '') + u.hash;
     } else {
+      sessionStorage.setItem('DEV_MODE','1');
+      (async ()=>{ try{ await swClearCaches(); await swUnregisterAll(); }catch{} })();
       p.set('dev','1'); p.set('sw','reset'); p.set('t', Date.now().toString());
       location.href = u.pathname + '?' + p.toString() + u.hash;
     }
-  });
+  }
+  const devBtn = qs('#btnDevQuick');
+  const devFab = qs('#devFab');
+  devBtn?.addEventListener('click', handleDevToggle);
+  devFab?.addEventListener('click', handleDevToggle);
 }
 
 // 手势：使用 Pointer Events 简化
@@ -176,10 +184,11 @@ async function swClearCaches(){
     return;
   }
 
-  const isDev = params.get('dev') === '1';
+  const isDev = params.get('dev') === '1' || sessionStorage.getItem('DEV_MODE') === '1';
   if (isDev){
     // 禁用 SW
     await swUnregisterAll();
+    sessionStorage.setItem('DEV_MODE','1');
     // 显示开发条
     const bar = document.createElement('div');
     bar.style.cssText = 'position:fixed;left:0;right:0;bottom:calc(var(--bottombar-h));z-index:60;background:#7c3aed;color:#fff;padding:.35rem .5rem;display:flex;gap:.5rem;align-items:center;justify-content:space-between;font-size:.9rem';
@@ -220,6 +229,7 @@ async function swClearCaches(){
     });
   } else {
     // 正常模式注册 SW
+    sessionStorage.removeItem('DEV_MODE');
     registerSW();
   }
 })();
