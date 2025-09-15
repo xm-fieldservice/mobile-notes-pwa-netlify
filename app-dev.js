@@ -411,6 +411,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('事件绑定完成');
   
+  // 右侧“刚提交”列表：事件代理，点击任意项联动输出框
+  const recentContainer = document.querySelector('#recent-submits') || document.querySelector('#recentList');
+  const outputEl2 = document.querySelector('#outputBox');
+  recentContainer?.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li || !recentContainer.contains(li)) return;
+    const content = li.dataset.content || '';
+    if (outputEl2) {
+      outputEl2.textContent = content;
+      console.log('点击右侧会话项, 输出框联动更新');
+    }
+    const rightDrawer = document.querySelector('#right-drawer');
+    if (rightDrawer && !rightDrawer.classList.contains('open')) {
+      closeAll();
+      setAriaOpen(rightDrawer, true);
+    }
+  });
+
   // 页面加载时恢复最近提交列表
   loadRecentList();
 });
