@@ -1,11 +1,62 @@
 # Mobile Notes PWA (Netlify auto-deploy)
 
-本仓库用于托管移动端笔记原型（PWA），并通过 Netlify 从 GitHub 自动构建与发布。
+一个基于 PWA 技术的移动端笔记应用，支持离线使用和本地存储。
 
-## 工作流
-- 修改代码 → `git add . && git commit -m "feat: ..." && git push`
-- Netlify 自动从 `main` 分支构建并发布
-- 如未看到最新变化，请在手机端刷新或在浏览器设置中清除该站点的离线数据（Service Worker 可能仍在缓存旧版本）
+## 功能特性
+
+- 移动端优化的响应式设计
+- 本地 IndexedDB 存储
+- Service Worker 离线支持
+- Markdown 格式笔记
+- 现代化 UI 设计
+- PWA 安装支持
+
+## 技术栈
+
+- HTML5 + CSS3 + JavaScript (ES6+)
+- IndexedDB 本地存储
+- Service Worker PWA
+- 响应式设计
+
+## 开发工作流
+
+### 本地开发
+```bash
+# 启动本地开发服务器
+cd mobile-notes-pwa-netlify
+python3 -m http.server 8080
+
+# 开发地址
+# 主页面：http://localhost:8080/
+# 开发页面：http://localhost:8080/dev.html
+```
+
+### 开发 -> 生产部署
+```bash
+# 1. 在 dev.html 完成功能开发
+# 2. 运行自动转换脚本
+./deploy.sh
+
+# 3. 提交并推送
+git add index.html
+git commit -m "deploy: 从开发版同步到生产版"
+git push origin main
+```
+
+### 文件说明
+- `dev.html` - 开发版本（禁用缓存，直连调试）
+- `app-dev.js` - 开发版 JS（无 Service Worker）
+- `index.html` - 生产版本（完整 PWA 功能）
+- `app.js` - 生产版 JS（包含 Service Worker）
+- `deploy.sh` - 自动转换脚本
+
+## 部署
+
+项目配置为自动部署到 Netlify。推送到 main 分支即可触发自动部署。
+
+## 许可证
+
+MIT License
 
 ## 目录
 - `index.html`/`styles.css`/`app.js`：页面与交互
