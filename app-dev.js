@@ -1,4 +1,4 @@
-// 开发版 JS - 基于 app.js 但移除 SW 相关逻辑，添加部署功能
+// 开发版 JS - 基于 app.js 但移除 SW 相关逻辑, 添加部署功能
 
 // 基础选择器
 const qs = (s, root = document) => root.querySelector(s);
@@ -24,7 +24,7 @@ function closeAll() {
   [left, right, topD].forEach((el) => setAriaOpen(el, false));
 }
 
-// 布局变量：根据真实高度写入，保证 2:1 充满可视区
+// 布局变量: 根据真实高度写入, 保证 2:1 充满可视区
 function setLayoutVars(){
   const tb = qs('.topbar');
   const bb = qs('.bottombar');
@@ -78,7 +78,7 @@ function initButtons() {
           .replace(/app-dev\.js\?dev=1/g, 'app.js')
           .replace(/\?dev=1/g, '');
         
-        // 这里应该调用 API 更新 index.html，暂时提示手动操作
+        // 这里应该调用 API 更新 index.html, 暂时提示手动操作
         alert('开发完成！请手动将 dev.html 的改动同步到 index.html');
       } catch (e) {
         alert('部署失败：' + e.message);
@@ -192,7 +192,7 @@ async function reloadNotes(){
 }
 
 function openEditor(initial=''){
-  // 优先使用原生 <dialog>，否则降级为 prompt()
+  // 优先使用原生 <dialog>, 否则降级为 prompt()
   const supportsDialog = typeof window.HTMLDialogElement !== 'undefined';
   if (supportsDialog) {
     // 动态创建一个简单的对话框
@@ -241,43 +241,184 @@ function openEditor(initial=''){
   }
 }
 
+// 全局提交函数（无需等待 DB）
+async function submitCurrentNote(){
+  console.log('submitCurrentNote 被调用');
+  const inputEl = document.querySelector('#composeInput');
+  const outputEl = document.querySelector('#outputBox');
+  // 右侧抽屉“刚提交”列表元素（容错：兼容旧 id）
+  let recentEl = document.querySelector('#recent-submits') || document.querySelector('#recentList');
+  const submitBtn = document.querySelector('#composeSubmit');
+  
+  const val = (inputEl?.value || '').trim();
+  console.log('输入值:', val);
+  
+  if(!val){ 
+    console.log('输入为空, 聚焦输入框');
+    inputEl?.focus(); 
+    return; 
+  }
+  
+  // 立即更新 UI（无需等待 DB）
+  if (outputEl) {
+    outputEl.textContent = val;
+    console.log('输出框已更新');
+  }
+  if (inputEl) {
+    inputEl.value = '';
+    console.log('输入框已清空');
+  }
+  
+  // 最近提交列表追加并持久化
+  console.log('recent-submits 元素:', recentEl);
+  if (recentEl){
+    const beforeCount = recentEl.children.length;
+    const li = document.createElement('li');
+    li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem; cursor:pointer;';
+    li.dataset.content = val; // 存储完整内容
+    const title = mdFirstLine(val) || '未命名笔记';
+    const excerpt = mdExcerpt(val);
+    li.innerHTML = `<div><strong>${title}</strong></div><div style="opacity:.8; font-size:.9em;">${excerpt}</div>`;
+    
+    // 点击列表项显示完整内容
+    li.addEventListener('click', () => {
+      if (outputEl) {
+        outputEl.textContent = val;
+        console.log('点击列表项, 输出框已更新为:', val);
+      }
+    });
+    
+    recentEl.prepend(li);
+    const afterCount = recentEl.children.length;
+    console.log('列表已添加项目: 之前数量 =', beforeCount, '现在数量 =', afterCount);
+    
+    // 持久化到 localStorage
+    saveRecentList();
+  }
+  
+  // 打开右侧抽屉
+  const rightDrawer = document.querySelector('#right-drawer');
+  console.log('准备打开右侧抽屉, 元素 =', rightDrawer);
+  if (rightDrawer){
+    closeAll();
+    setAriaOpen(rightDrawer, true);
+    console.log('右侧抽屉已打开, aria-hidden =', rightDrawer.getAttribute('aria-hidden'), 'classList =', rightDrawer.className);
+  } else {
+    console.warn('未找到 #right-drawer 元素, 请检查 dev.html 结构');
+  }
+  
+  // 简易提示
+  try{ 
+    if ('vibrate' in navigator) navigator.vibrate(10);
+    if (submitBtn){ 
+      submitBtn.textContent = '已提交'; 
+      setTimeout(()=>{ submitBtn.textContent = '提交'; }, 900);
+      console.log('按钮文本已更新');
+    }
+  }catch{}
+  
+  // 如果 DB 可用, 保存到数据库
+  if (window.DB && CURRENT_TOPIC) {
+    try {
+      await window.DB.addNote(CURRENT_TOPIC.id, val);
+      await reloadNotes();
+      console.log('已保存到数据库');
+    } catch (e) {
+      console.warn('保存到数据库失败:', e);
+    }
+  }
+}
+
+// 持久化最近提交列表
+function saveRecentList() {
+  const recentEl = document.querySelector('#recent-submits') || document.querySelector('#recentList');
+  if (!recentEl) return;
+  
+  const items = Array.from(recentEl.children).map(li => ({
+    content: li.dataset.content,
+    title: li.querySelector('strong')?.textContent || '未命名笔记',
+    excerpt: li.querySelector('div:last-child')?.textContent || ''
+  }));
+  
+  localStorage.setItem('recentSubmissions', JSON.stringify(items));
+  console.log('最近提交列表已保存到 localStorage');
+}
+
+// 恢复最近提交列表
+function loadRecentList() {
+  const recentEl = document.querySelector('#recent-submits') || document.querySelector('#recentList');
+  if (!recentEl) return;
+  
+  try {
+    const saved = localStorage.getItem('recentSubmissions');
+    if (!saved) return;
+    
+    const items = JSON.parse(saved);
+    recentEl.innerHTML = '';
+    
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem; cursor:pointer;';
+      li.dataset.content = item.content;
+      li.innerHTML = `<div><strong>${item.title}</strong></div><div style="opacity:.8; font-size:.9em;">${item.excerpt}</div>`;
+      
+      // 点击列表项显示完整内容
+      li.addEventListener('click', () => {
+        const outputEl = document.querySelector('#outputBox');
+        if (outputEl) {
+          outputEl.textContent = item.content;
+          console.log('点击列表项, 输出框已更新为:', item.content);
+        }
+      });
+      
+      recentEl.appendChild(li);
+    });
+    
+    console.log('已恢复', items.length, '个最近提交项目');
+  } catch (e) {
+    console.warn('恢复最近提交列表失败:', e);
+  }
+}
+
+// 页面加载完成后绑定事件
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM 加载完成, 开始绑定事件');
+  
+  const composeSubmitBtn = document.querySelector('#composeSubmit');
+  const composeInputArea = document.querySelector('#composeInput');
+  
+  console.log('composeSubmit:', composeSubmitBtn);
+  console.log('composeInput:', composeInputArea);
+
+  composeSubmitBtn?.addEventListener('click', () => {
+    console.log('提交按钮被点击');
+    submitCurrentNote();
+  });
+
+  composeInputArea?.addEventListener('keydown', (e)=>{
+    console.log('键盘事件:', e.key, 'Alt:', e.altKey, 'Ctrl:', e.ctrlKey);
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ 
+      e.preventDefault(); 
+      console.log('Ctrl+Enter 触发提交');
+      submitCurrentNote(); 
+    }
+    if (e.altKey && e.key === 'Enter'){ 
+      e.preventDefault(); 
+      console.log('Alt+Enter 触发提交');
+      submitCurrentNote(); 
+    }
+  });
+
+  console.log('事件绑定完成');
+  
+  // 页面加载时恢复最近提交列表
+  loadRecentList();
+});
+
 // 事件：新建与列表操作
 function initMinimalPersistenceUI(){
   // 顶部抽屉"新建笔记"
   qs('#newNote')?.addEventListener('click', ()=> openEditor(''));
-
-  // 新布局：提交当前笔记
-  async function submitCurrentNote(){
-    const val = (composeInput?.value || '').trim();
-    if(!val){ composeInput?.focus(); return; }
-    const id = await window.DB.addNote(CURRENT_TOPIC.id, val);
-    // 输出框显示
-    if (outputBox) outputBox.textContent = val;
-    // 最近提交列表追加
-    if (recentList){
-      const li = document.createElement('li');
-      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem;';
-      const title = mdFirstLine(val) || '未命名笔记';
-      const excerpt = mdExcerpt(val);
-      li.innerHTML = `<div><strong>${title}</strong></div><div style="opacity:.8; font-size:.9em;">${excerpt}</div>`;
-      recentList.prepend(li);
-    }
-    // 清空输入
-    if (composeInput) composeInput.value = '';
-    // 打开右侧抽屉
-    closeAll(); setAriaOpen(right, true);
-    // 简易提示
-    try{ 
-      if ('vibrate' in navigator) navigator.vibrate(10);
-      if (composeSubmit){ composeSubmit.textContent = '已提交'; setTimeout(()=>{ composeSubmit.textContent = '提交'; }, 900); }
-    }catch{}
-    await reloadNotes();
-  }
-
-  composeSubmit?.addEventListener('click', submitCurrentNote);
-  composeInput?.addEventListener('keydown', (e)=>{
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); submitCurrentNote(); }
-  });
 
   // 列表事件代理
   listEl?.addEventListener('click', async (e)=>{
@@ -316,7 +457,7 @@ function initMinimalPersistenceUI(){
 
 (async function bootstrap(){
   if(!window.DB){
-    console.warn('DB 未就绪，持久化不可用');
+    console.warn('DB 未就绪, 持久化不可用');
     return;
   }
   const topicId = await window.DB.ensureDefaultTopic();

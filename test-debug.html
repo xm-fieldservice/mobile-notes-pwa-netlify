@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>调试测试</title>
+</head>
+<body>
+    <h1>调试测试页面</h1>
+    <textarea id="composeInput" placeholder="输入测试内容">测试内容</textarea>
+    <button id="composeSubmit">提交</button>
+    <pre id="outputBox">输出区域</pre>
+    <div id="recent-submits">最近提交列表</div>
+    
+    <script>
+        console.log('开始调试测试');
+        
+        const composeInput = document.querySelector('#composeInput');
+        const composeSubmit = document.querySelector('#composeSubmit');
+        const outputBox = document.querySelector('#outputBox');
+        const recentList = document.querySelector('#recent-submits');
+        
+        console.log('元素检查:', {
+            composeInput: composeInput,
+            composeSubmit: composeSubmit,
+            outputBox: outputBox,
+            recentList: recentList
+        });
+        
+        function submitCurrentNote(){
+            console.log('submitCurrentNote 被调用');
+            const val = (composeInput?.value || '').trim();
+            console.log('输入值:', val);
+            
+            if(!val){ 
+                console.log('输入为空，聚焦');
+                composeInput?.focus(); 
+                return; 
+            }
+            
+            // 立即更新 UI
+            if (outputBox) {
+                outputBox.textContent = val;
+                console.log('输出框已更新');
+            }
+            if (composeInput) {
+                composeInput.value = '';
+                console.log('输入框已清空');
+            }
+            
+            // 最近提交列表追加
+            if (recentList){
+                const li = document.createElement('li');
+                li.textContent = val;
+                recentList.appendChild(li);
+                console.log('列表已添加');
+            }
+            
+            // 简易提示
+            if (composeSubmit){ 
+                composeSubmit.textContent = '已提交'; 
+                setTimeout(()=>{ composeSubmit.textContent = '提交'; }, 900); 
+                console.log('按钮文本已更新');
+            }
+        }
+        
+        // 绑定事件
+        composeSubmit?.addEventListener('click', ()=>{
+            console.log('点击事件触发');
+            submitCurrentNote();
+        });
+        
+        composeInput?.addEventListener('keydown', (e)=>{
+            console.log('键盘事件:', e.key, e.altKey, e.ctrlKey, e.metaKey);
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ 
+                e.preventDefault(); 
+                console.log('Ctrl+Enter 触发');
+                submitCurrentNote(); 
+            }
+            if (e.altKey && e.key === 'Enter'){ 
+                e.preventDefault(); 
+                console.log('Alt+Enter 触发');
+                submitCurrentNote(); 
+            }
+        });
+        
+        console.log('事件绑定完成');
+    </script>
+</body>
+</html>

@@ -128,6 +128,14 @@
         regs.forEach(reg => reg.unregister().catch(() => {}));
       });
     }
+    
+    // 调试日志
+    console.log('dev.html 加载完成');
+    window.addEventListener('load', () => {
+      console.log('页面完全加载');
+      console.log('composeInput:', document.querySelector('#composeInput'));
+      console.log('composeSubmit:', document.querySelector('#composeSubmit'));
+    });
   </script>
   <script src="db.js?dev=1" type="module"></script>
   <script src="app-dev.js?dev=1" type="module"></script>

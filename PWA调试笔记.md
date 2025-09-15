@@ -1,13 +1,8 @@
 
 # 我们开始改造“PWA 手机页面”
-## 1. 新建笔记
+### 1. 新建笔记
 点击“新建”按键，弹出的“快速操作”页面需要修改
 增加“笔记”输入框，点击输入框，直接可以输入，编辑框内内容，增加“提交”按键
-
-
-
-
-
 
 
 已按你的要求完成修改，并已推送自动发布。现在从底部“＋ 新建”打开的“快速操作”支持直接输入与提交。
@@ -37,9 +32,60 @@
 
 ---
 
+### 变更不能在手机应用上自动升级；
+1. https://mobile-notes-pwa-netlify.netlify.app/#页面内可以看到修改更新；
+但是在手机应用上，没有看到升级的小红点，也没有变化。
 
+### 
 
 增加“整理”按键
 增加“复制”按键，复制框内所有内容到剪贴板。
 增加“粘贴”按键，粘贴剪贴板内所有内容到输入框
 输入框内长按屏幕，弹出操作菜单
+
+---
+
+
+
+
+
+
+
+
+
+
+已创建完整的开发到生产自动转换方案：
+
+**自动转换脚本：[deploy.sh](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/deploy.sh:0:0-0:0)**
+- 自动移除开发标识（`[开发]`、缓存禁用 meta 标签）
+- 恢复 Service Worker 注册和 PWA manifest
+- 转换 [app-dev.js](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/app-dev.js:0:0-0:0) → [app.js](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/app.js:0:0-0:0)
+- 备份现有 [index.html](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/index.html:0:0-0:0)
+
+**使用方法：**
+```bash
+# 1. 在 dev.html 完成开发
+# 2. 运行转换脚本
+./deploy.sh
+
+# 3. 推送到生产
+git add index.html
+git commit -m "deploy: 从开发版同步到生产版"
+git push origin main
+```
+
+**开发工作流：**
+- 开发：`http://localhost:8080/dev.html`（直连无缓存）
+- 生产：自动转换后推送部署
+
+现在你可以安心在 [dev.html](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/dev.html:0:0-0:0) 开发，完成后一键转换部署，无需手动处理任何兼容性问题。
+
+自动转换脚本和工作流已创建完成并推送。现在你可以：
+
+1. **本地开发**：访问 `http://localhost:8080/dev.html` 进行直连开发
+2. **部署生产**：运行 [./deploy.sh](cci:7://file:///home/ecs-assist-user/Projects/mobile-notes-pwa-netlify/deploy.sh:0:0-0:0) 自动转换并推送
+
+开发环境完全绕过缓存，改代码立即生效。生产部署时自动处理所有兼容性问题。
+
+---
+
