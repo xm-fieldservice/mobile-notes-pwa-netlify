@@ -240,6 +240,28 @@ function initMinimalPersistenceUI(){
   // 底部“＋ 新建”复用
   qs('#btnTopMenu2')?.addEventListener('click', ()=> openEditor(''));
 
+  // 顶部抽屉“快速操作”直接输入并提交
+  const quickInput = qs('#quickNoteInput');
+  const quickSubmit = qs('#quickNoteSubmit');
+  quickSubmit?.addEventListener('click', async ()=>{
+    const val = (quickInput?.value || '').trim();
+    if(!val){
+      // 简易反馈
+      quickInput?.focus();
+      return;
+    }
+    await window.DB.addNote(CURRENT_TOPIC.id, val);
+    if (quickInput) quickInput.value = '';
+    await reloadNotes();
+  });
+  // 支持 Ctrl/Cmd+Enter 快速提交
+  quickInput?.addEventListener('keydown', async (e)=>{
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+      e.preventDefault();
+      quickSubmit?.click();
+    }
+  });
+
   // 列表事件代理
   listEl.addEventListener('click', async (e)=>{
     const btn = e.target.closest('button');
