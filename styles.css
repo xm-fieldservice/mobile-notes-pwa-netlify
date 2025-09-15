@@ -5,6 +5,9 @@
   --brand:#22c55e;
   --card:#111827;
   --shadow: rgba(0,0,0,.35);
+  /* 运行时写入 */
+  --topbar-h: 56px;
+  --bottombar-h: 64px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -34,14 +37,14 @@ button:active{transform:scale(.98)}
   background:#ef4444; border-radius:50%; box-shadow:0 0 0 2px rgba(15,23,42,.85);
 }
 
-.content{padding: .75rem; padding-bottom: 4.5rem}
+.content{padding: .75rem; padding-bottom: calc(var(--bottombar-h) + .75rem)}
 .note-list{list-style:none; margin:0; padding:0; display:grid; gap:.75rem}
 .note-item{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:.75rem; box-shadow:0 10px 30px var(--shadow)}
 .note-item h3{margin:.15rem 0 .25rem 0; font-size:1rem}
 .note-item p{margin:.25rem 0; color:var(--muted); line-height:1.5}
 
 /* 上下分栏编辑器布局 */
-.editor-split{display:flex; flex-direction:column; gap:.75rem; height:calc(100dvh - 8.5rem - env(safe-area-inset-bottom))}
+.editor-split{display:flex; flex-direction:column; gap:.75rem; height:calc(100dvh - var(--topbar-h) - var(--bottombar-h) - env(safe-area-inset-bottom) - 1.5rem)}
 .editor-split .panel{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:.75rem}
 .editor-split .output{flex:2; overflow:auto; white-space:pre-wrap; color:var(--muted)}
 .editor-split .input{flex:1; display:flex; flex-direction:column; gap:.5rem}

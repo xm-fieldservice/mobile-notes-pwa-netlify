@@ -22,6 +22,15 @@ function closeAll() {
   [left, right, topD].forEach((el) => setAriaOpen(el, false));
 }
 
+// 布局变量：根据真实高度写入，保证 2:1 充满可视区
+function setLayoutVars(){
+  const tb = qs('.topbar');
+  const bb = qs('.bottombar');
+  const r = document.documentElement;
+  if (tb) r.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
+  if (bb) r.style.setProperty('--bottombar-h', bb.offsetHeight + 'px');
+}
+
 // 按钮事件
 function initButtons() {
   const map = [
@@ -49,6 +58,21 @@ function initButtons() {
 
   // 背景点击关闭
   backdrop.addEventListener('click', closeAll);
+
+  // 一键调试按钮：进入/退出 dev 模式
+  const devBtn = qs('#btnDevQuick');
+  devBtn?.addEventListener('click', ()=>{
+    const u = new URL(location.href);
+    const p = u.searchParams;
+    const isDev = p.get('dev') === '1';
+    if (isDev){
+      p.delete('dev'); p.delete('t'); p.delete('sw');
+      location.href = u.pathname + (p.toString()? ('?'+p.toString()): '') + u.hash;
+    } else {
+      p.set('dev','1'); p.set('sw','reset'); p.set('t', Date.now().toString());
+      location.href = u.pathname + '?' + p.toString() + u.hash;
+    }
+  });
 }
 
 // 手势：使用 Pointer Events 简化
@@ -126,7 +150,82 @@ async function registerSW() {
 initButtons();
 initGestures();
 initPWAInstall();
-registerSW();
+
+// 调试通道：?dev=1 禁用SW并显示开发条；?sw=reset 清缓存+注销SW
+const url = new URL(location.href);
+const params = url.searchParams;
+
+async function swUnregisterAll(){
+  if (!('serviceWorker' in navigator)) return;
+  const regs = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(regs.map(r=> r.unregister().catch(()=>{})));
+}
+async function swClearCaches(){
+  if (!('caches' in window)) return;
+  const keys = await caches.keys();
+  await Promise.all(keys.map(k=> caches.delete(k)));
+}
+
+(async function devChannel(){
+  if (params.get('sw') === 'reset'){
+    await swClearCaches();
+    await swUnregisterAll();
+    params.delete('sw');
+    history.replaceState({}, '', url.pathname + '?' + params.toString());
+    location.reload();
+    return;
+  }
+
+  const isDev = params.get('dev') === '1';
+  if (isDev){
+    // 禁用 SW
+    await swUnregisterAll();
+    // 显示开发条
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:calc(var(--bottombar-h));z-index:60;background:#7c3aed;color:#fff;padding:.35rem .5rem;display:flex;gap:.5rem;align-items:center;justify-content:space-between;font-size:.9rem';
+    bar.innerHTML = `
+      <div>Dev 模式（禁用SW）</div>
+      <div style="display:flex;gap:.35rem;">
+        <button id="devHardReload">硬刷新</button>
+        <button id="devClearCache">清缓存</button>
+        <button id="devForceUpdate">SW更新并应用</button>
+      </div>`;
+    document.body.appendChild(bar);
+
+    // 样式微调按钮
+    ['devHardReload','devClearCache','devForceUpdate'].forEach(id=>{
+      const b = bar.querySelector('#'+id); if(b){ b.style.cssText='background:#111827;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:.35rem .6rem'; }
+    });
+
+    bar.querySelector('#devHardReload')?.addEventListener('click', ()=>{
+      // 追加时间戳参数强制网络加载
+      params.set('t', Date.now().toString());
+      history.replaceState({}, '', url.pathname + '?' + params.toString());
+      location.reload();
+    });
+    bar.querySelector('#devClearCache')?.addEventListener('click', async ()=>{
+      await swClearCaches();
+      alert('已清理 CacheStorage');
+    });
+    bar.querySelector('#devForceUpdate')?.addEventListener('click', async ()=>{
+      if (!('serviceWorker' in navigator)) return alert('此环境不支持 SW');
+      const reg = await navigator.serviceWorker.getRegistration();
+      try{ await reg?.update(); }catch{}
+      if (reg?.waiting){
+        reg.waiting.postMessage({type:'SKIP_WAITING'});
+        navigator.serviceWorker.addEventListener('controllerchange', ()=> location.reload());
+      } else {
+        alert('没有 waiting 的 SW，可先点击硬刷新');
+      }
+    });
+  } else {
+    // 正常模式注册 SW
+    registerSW();
+  }
+})();
+// 写入布局变量（首屏与旋转/尺寸变化时）
+setLayoutVars();
+window.addEventListener('resize', setLayoutVars);
 
 // =====================
 // 最小可用：本地持久化（仅 Markdown 文档）
@@ -261,6 +360,12 @@ function initMinimalPersistenceUI(){
     if (composeInput) composeInput.value = '';
     // 打开右侧抽屉
     closeAll(); setAriaOpen(right, true);
+    // 简易提示
+    try{ 
+      if ('vibrate' in navigator) navigator.vibrate(10);
+      const btn = qs('#btnSubmit') || composeSubmit;
+      if (btn){ btn.textContent = '已提交'; setTimeout(()=>{ btn.textContent = '提交'; }, 900); }
+    }catch{}
     await reloadNotes();
   }
 
