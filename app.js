@@ -28,7 +28,6 @@ function initButtons() {
     { btn: '#btnLeftMenu', target: left },
     { btn: '#btnRightMenu', target: right },
     { btn: '#btnTopMenu', target: topD },
-    { btn: '#btnTopMenu2', target: topD },
   ];
   map.forEach(({ btn, target }) => {
     const el = qs(btn);
@@ -135,6 +134,10 @@ registerSW();
 // =====================
 
 const listEl = qs('.note-list');
+const outputBox = qs('#outputBox');
+const composeInput = qs('#composeInput');
+const composeSubmit = qs('#composeSubmit');
+const recentList = qs('#recent-submits');
 let CURRENT_TOPIC = null;
 
 function mdFirstLine(md){
@@ -150,6 +153,7 @@ function mdExcerpt(md){
 }
 
 function renderNotes(notes){
+  if (!listEl) return; // 新布局下无列表区
   listEl.innerHTML = '';
   if(!notes || !notes.length){
     const li = document.createElement('li');
@@ -237,33 +241,37 @@ function initMinimalPersistenceUI(){
   // 顶部抽屉“新建笔记”
   qs('#newNote')?.addEventListener('click', ()=> openEditor(''));
 
-  // 底部“＋ 新建”复用
-  qs('#btnTopMenu2')?.addEventListener('click', ()=> openEditor(''));
-
-  // 顶部抽屉“快速操作”直接输入并提交
-  const quickInput = qs('#quickNoteInput');
-  const quickSubmit = qs('#quickNoteSubmit');
-  quickSubmit?.addEventListener('click', async ()=>{
-    const val = (quickInput?.value || '').trim();
-    if(!val){
-      // 简易反馈
-      quickInput?.focus();
-      return;
+  // 新布局：提交当前笔记
+  async function submitCurrentNote(){
+    const val = (composeInput?.value || '').trim();
+    if(!val){ composeInput?.focus(); return; }
+    const id = await window.DB.addNote(CURRENT_TOPIC.id, val);
+    // 输出框显示
+    if (outputBox) outputBox.textContent = val;
+    // 最近提交列表追加
+    if (recentList){
+      const li = document.createElement('li');
+      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem;';
+      const title = mdFirstLine(val) || '未命名笔记';
+      const excerpt = mdExcerpt(val);
+      li.innerHTML = `<div><strong>${title}</strong></div><div style="opacity:.8; font-size:.9em;">${excerpt}</div>`;
+      recentList.prepend(li);
     }
-    await window.DB.addNote(CURRENT_TOPIC.id, val);
-    if (quickInput) quickInput.value = '';
+    // 清空输入
+    if (composeInput) composeInput.value = '';
+    // 打开右侧抽屉
+    closeAll(); setAriaOpen(right, true);
     await reloadNotes();
-  });
-  // 支持 Ctrl/Cmd+Enter 快速提交
-  quickInput?.addEventListener('keydown', async (e)=>{
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
-      e.preventDefault();
-      quickSubmit?.click();
-    }
+  }
+
+  composeSubmit?.addEventListener('click', submitCurrentNote);
+  qs('#btnSubmit')?.addEventListener('click', submitCurrentNote);
+  composeInput?.addEventListener('keydown', (e)=>{
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); submitCurrentNote(); }
   });
 
   // 列表事件代理
-  listEl.addEventListener('click', async (e)=>{
+  listEl?.addEventListener('click', async (e)=>{
     const btn = e.target.closest('button');
     if(!btn) return;
     const li = e.target.closest('li.note-item');
