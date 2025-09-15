@@ -41,18 +41,24 @@ button:active{transform:scale(.98)}
 .note-item p{margin:.25rem 0; color:var(--muted); line-height:1.5}
 
 /* 上下分栏编辑器布局 */
-.editor-split{display:flex; flex-direction:column; gap:.75rem; height:calc(100vh - 8.5rem)}
+.editor-split{display:flex; flex-direction:column; gap:.75rem; height:calc(100dvh - 8.5rem - env(safe-area-inset-bottom))}
 .editor-split .panel{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:.75rem}
 .editor-split .output{flex:2; overflow:auto; white-space:pre-wrap; color:var(--muted)}
 .editor-split .input{flex:1; display:flex; flex-direction:column; gap:.5rem}
-.editor-split .input textarea{flex:1; width:100%; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b1020; color:#e5e7eb; padding:.75rem; resize:vertical}
-.editor-split .input .actions{display:flex; gap:.5rem; justify-content:flex-end}
+.editor-split .input textarea{flex:1; width:100%; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b1020; color:#e5e7eb; padding:1rem; resize:vertical; font-size:16px; line-height:1.5}
+.editor-split .input .actions{display:flex; gap:.75rem; justify-content:flex-end}
+.editor-split .input .actions button{min-height:42px; padding:.6rem 1rem; border-radius:12px}
 
 .bottombar{
   position:fixed; bottom:0; left:0; right:0; z-index:40;
   display:flex; gap:.5rem; justify-content:space-around;
-  padding:.5rem; background:rgba(15,23,42,.85); border-top:1px solid rgba(255,255,255,.06);
+  padding: calc(.5rem + env(safe-area-inset-bottom)) .5rem .5rem .5rem; background:rgba(15,23,42,.85); border-top:1px solid rgba(255,255,255,.06);
   backdrop-filter:saturate(1.2) blur(6px);
+}
+
+@media (max-width: 420px){
+  .topbar{padding:.45rem .5rem}
+  .editor-split{gap:.5rem; height:calc(100dvh - 7.8rem - env(safe-area-inset-bottom))}
 }
 
 /* Drawers */

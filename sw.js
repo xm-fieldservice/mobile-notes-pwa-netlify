@@ -1,5 +1,5 @@
 // App shell 缓存（根路径部署）
-const CACHE = 'notes-pwa-netlify-v2';
+const CACHE = 'notes-pwa-netlify-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
