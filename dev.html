@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Mobile Notes PWA - 开发版</title>
+  <!-- 开发模式：禁用缓存 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="styles.css?dev=1" />
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <button id="btnTopMenu" aria-label="打开顶部菜单" aria-controls="top-drawer" aria-expanded="false">☰</button>
+    <h1 class="app-title">笔记 <span style="font-size:.8em;opacity:.7">[开发]</span></h1>
+    <div class="spacer"></div>
+    <button id="btnVersion" aria-label="查看版本记录">版本</button>
+    <button id="btnRightMenu" aria-label="打开右侧菜单" aria-controls="right-drawer" aria-expanded="false">≡</button>
+  </header>
+
+  <!-- 手势边缘探测区域 -->
+  <div class="edge-left" aria-hidden="true"></div>
+  <div class="edge-right" aria-hidden="true"></div>
+  <div class="edge-top" aria-hidden="true"></div>
+
+  <nav id="left-drawer" class="drawer drawer-left" aria-hidden="true" aria-label="导航">
+    <div class="drawer-header">
+      <h2>导航</h2>
+      <button class="btn-close" data-close="#left-drawer" aria-label="关闭左侧菜单">×</button>
+    </div>
+    <ul class="menu">
+      <li><a href="#">全部笔记</a></li>
+      <li><a href="#">收藏</a></li>
+      <li><a href="#">标签</a></li>
+      <li><a href="#">设置</a></li>
+    </ul>
+  </nav>
+
+  <aside id="right-drawer" class="drawer drawer-right" aria-hidden="true" aria-label="工具">
+    <div class="drawer-header">
+      <h2>工具</h2>
+      <button class="btn-close" data-close="#right-drawer" aria-label="关闭右侧菜单">×</button>
+    </div>
+    <div class="tools">
+      <label>
+        <input type="checkbox" /> 仅显示未归档
+      </label>
+      <label>
+        排序
+        <select>
+          <option>最近修改</option>
+          <option>标题</option>
+        </select>
+      </label>
+      <hr style="border-color: rgba(255,255,255,.08); margin:.5rem 0" />
+      <div>
+        <h3 style="margin:.25rem 0 .5rem 0; font-size:1rem">刚提交</h3>
+        <ul id="recent-submits" style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem"></ul>
+      </div>
+    </div>
+  </aside>
+
+  <section id="top-drawer" class="drawer drawer-top" aria-hidden="true" aria-label="快速操作">
+    <div class="drawer-header">
+      <h2>快速操作</h2>
+      <button class="btn-close" data-close="#top-drawer" aria-label="关闭顶部菜单">×</button>
+    </div>
+    <div class="quick-actions">
+      <input id="search" type="search" placeholder="搜索笔记…" aria-label="搜索笔记" />
+      <button id="newNote">新建笔记</button>
+    </div>
+  </section>
+
+  <div id="backdrop" class="backdrop" hidden></div>
+
+  <!-- 版本记录弹窗 -->
+  <dialog id="version-dialog" style="max-width:96vw; width:720px; border:1px solid rgba(255,255,255,.12); background:#0b1224; color:#e5e7eb; border-radius:12px; padding:0;">
+    <form method="dialog" style="display:flex; flex-direction:column; gap:.5rem; padding:.75rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
+        <h3 id="version-title" style="margin:.25rem 0; font-size:1.05rem;">版本记录 - 开发版</h3>
+        <button value="cancel" aria-label="关闭">×</button>
+      </div>
+      <section id="history" style="display:flex; flex-direction:column; gap:.5rem">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
+          <strong>历史版本</strong>
+          <div style="font-size:.9em; opacity:.8">最近记录</div>
+        </div>
+        <ul id="history-list" style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.35rem"></ul>
+      </section>
+      <pre id="changelog" style="white-space:pre-wrap; background:#0b1020; border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:.75rem; max-height:40vh; overflow:auto;">开发模式 - 直连无缓存</pre>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+        <button id="btnDeployToProd" type="button" style="background:#22c55e; border-color:#22c55e; color:#0b1020;">部署到生产</button>
+      </div>
+    </form>
+  </dialog>
+
+  <main class="content" role="main">
+    <div class="editor-split">
+      <pre id="outputBox" class="panel output" aria-label="输出框">在此显示最近提交的笔记内容…</pre>
+      <div class="panel input" aria-label="输入区域">
+        <textarea id="composeInput" placeholder="在此输入新的笔记（Markdown）…" aria-label="笔记输入框"></textarea>
+        <div class="actions">
+          <button id="composeSubmit" type="button" style="background:#22c55e; border-color:#22c55e; color:#0b1020;">提交</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bottombar" role="contentinfo">
+    <button id="btnLeftMenu" aria-label="打开左侧菜单" aria-controls="left-drawer" aria-expanded="false">☰ 分类</button>
+    <button id="installPWA" aria-label="安装为应用" hidden>安装应用</button>
+  </footer>
+
+  <!-- 开发模式指示条 -->
+  <div style="position:fixed;left:0;right:0;bottom:calc(var(--bottombar-h));z-index:60;background:#7c3aed;color:#fff;padding:.35rem .5rem;display:flex;gap:.5rem;align-items:center;justify-content:space-between;font-size:.9rem">
+    <div>开发模式（直连无缓存）</div>
+    <div style="display:flex;gap:.35rem;">
+      <button onclick="location.reload()" style="background:#111827;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:.35rem .6rem">刷新</button>
+    </div>
+  </div>
+
+  <script>
+    // 开发模式：禁用 Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => reg.unregister().catch(() => {}));
+      });
+    }
+  </script>
+  <script src="db.js?dev=1" type="module"></script>
+  <script src="app-dev.js?dev=1" type="module"></script>
+</body>
+</html>
