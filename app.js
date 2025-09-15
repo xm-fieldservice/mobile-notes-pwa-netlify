@@ -77,10 +77,8 @@ function initButtons() {
       location.href = u.pathname + '?' + p.toString() + u.hash;
     }
   }
-  const devBtn = qs('#btnDevQuick');
-  const devFab = qs('#devFab');
-  devBtn?.addEventListener('click', handleDevToggle);
-  devFab?.addEventListener('click', handleDevToggle);
+  // 版本弹窗中的“调试”按钮作为唯一入口
+  document.getElementById('btnDevToggle')?.addEventListener('click', handleDevToggle);
 }
 
 // 手势：使用 Pointer Events 简化
@@ -373,14 +371,12 @@ function initMinimalPersistenceUI(){
     // 简易提示
     try{ 
       if ('vibrate' in navigator) navigator.vibrate(10);
-      const btn = qs('#btnSubmit') || composeSubmit;
-      if (btn){ btn.textContent = '已提交'; setTimeout(()=>{ btn.textContent = '提交'; }, 900); }
+      if (composeSubmit){ composeSubmit.textContent = '已提交'; setTimeout(()=>{ composeSubmit.textContent = '提交'; }, 900); }
     }catch{}
     await reloadNotes();
   }
 
   composeSubmit?.addEventListener('click', submitCurrentNote);
-  qs('#btnSubmit')?.addEventListener('click', submitCurrentNote);
   composeInput?.addEventListener('keydown', (e)=>{
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); submitCurrentNote(); }
   });
