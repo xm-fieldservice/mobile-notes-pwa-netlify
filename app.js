@@ -80,14 +80,16 @@ function initButtons() {
   // 版本弹窗中的“调试”按钮作为唯一入口
   document.getElementById('btnDevToggle')?.addEventListener('click', handleDevToggle);
 
-  // 连接服务器按钮：一键配置服务器模式
-  document.getElementById('btnConnectServer')?.addEventListener('click', () => {
-    const serverBase = prompt('请输入服务器地址（例如：http://172.19.128.194:3000）', 'http://172.19.128.194:3000');
-    if (serverBase && serverBase.trim()) {
-      localStorage.setItem('SERVER_BASE', serverBase.trim());
-      localStorage.setItem('SERVER_MODE', '1');
-      alert('服务器已配置，页面即将刷新以启用服务器模式');
-      location.reload();
+  // 连接服务器按钮：使用事件委托确保 PWA 环境下可用
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btnConnectServer') {
+      const serverBase = prompt('请输入服务器地址（例如：http://172.19.128.194:3000）', 'http://172.19.128.194:3000');
+      if (serverBase && serverBase.trim()) {
+        localStorage.setItem('SERVER_BASE', serverBase.trim());
+        localStorage.setItem('SERVER_MODE', '1');
+        alert('服务器已配置，页面即将刷新以启用服务器模式');
+        location.reload();
+      }
     }
   });
 }
