@@ -85,6 +85,17 @@ function initButtons() {
       }
     }
   });
+
+  // 连接服务器按钮：一键配置服务器模式
+  document.getElementById('btnConnectServer')?.addEventListener('click', () => {
+    const serverBase = prompt('请输入服务器地址（例如：http://172.19.128.194:3000）', 'http://172.19.128.194:3000');
+    if (serverBase && serverBase.trim()) {
+      localStorage.setItem('SERVER_BASE', serverBase.trim());
+      localStorage.setItem('SERVER_MODE', '1');
+      alert('服务器已配置，页面即将刷新以启用服务器模式');
+      location.reload();
+    }
+  });
 }
 
 // 手势：使用 Pointer Events 简化
@@ -393,20 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
   composeSubmitBtn?.addEventListener('click', () => {
     console.log('提交按钮被点击');
     submitCurrentNote();
-  });
-
-  composeInputArea?.addEventListener('keydown', (e)=>{
-    console.log('键盘事件:', e.key, 'Alt:', e.altKey, 'Ctrl:', e.ctrlKey);
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ 
-      e.preventDefault(); 
-      console.log('Ctrl+Enter 触发提交');
-      submitCurrentNote(); 
-    }
-    if (e.altKey && e.key === 'Enter'){ 
-      e.preventDefault(); 
-      console.log('Alt+Enter 触发提交');
-      submitCurrentNote(); 
-    }
   });
 
   console.log('事件绑定完成');

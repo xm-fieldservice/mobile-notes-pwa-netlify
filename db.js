@@ -155,4 +155,27 @@
     deleteNote,
     toggleFavoriteNote,
   };
+  (function(){
+    try{
+      const params = new URLSearchParams(location.search);
+      const SERVER_MODE = (params.get('server') === '1') || (localStorage.getItem('SERVER_MODE') === '1');
+      if (SERVER_MODE) {
+        const base = localStorage.getItem('SERVER_BASE') || (location.protocol + '//' + location.hostname + ':3000');
+        const postJSON = async (path, payload) => {
+          const r = await fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        };
+        window.DB.addNote = async (topicId, contentMD) => {
+          const body = { topic_id: String(topicId || ''), final_md: String(contentMD || ''), mode: 'note', team_config_path: null, policy: { index_vector: 0, index_graphrag: 0, index_table: 0 } };
+          const res = await postJSON('/submit', body);
+          const now = Date.now();
+          return { id: res && res.note_id ? res.note_id : '', topicId, contentMD, favorite: false, createdAt: now };
+        };
+        window.DB.listNotesByTopic = async () => { return []; };
+        window.DB.deleteNote = async () => {};
+        window.DB.toggleFavoriteNote = async () => {};
+      }
+    }catch{}
+  })();
 })();
