@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配置服务器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 { color: #333; margin-bottom: 1.5rem; font-size: 1.5rem; }
+    .option {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option:hover { border-color: #667eea; background: #f0f4ff; }
+    .option.selected { border-color: #667eea; background: #e8eeff; }
+    .option h3 { color: #667eea; margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .option p { color: #666; font-size: 0.9rem; line-height: 1.5; }
+    .option .url { 
+      background: white;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #333;
+      word-break: break-all;
+    }
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #5568d3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔗 配置服务器连接</h1>
+    
+    <div class="option" data-url="http://172.19.128.194/api">
+      <h3>✅ 推荐：Nginx 反向代理（无混合内容问题）</h3>
+      <p>通过服务器 Nginx 访问后端，避免 HTTPS 混合内容拦截</p>
+      <div class="url">http://172.19.128.194/api</div>
+    </div>
+    
+    <div class="option" data-url="http://172.19.128.194:3000">
+      <h3>⚠️ 直连后端（可能被浏览器拦截）</h3>
+      <p>直接访问后端 3000 端口，HTTPS 页面可能拦截 HTTP 请求</p>
+      <div class="url">http://172.19.128.194:3000</div>
+    </div>
+    
+    <button id="btnConfirm" disabled>确认并启用服务器模式</button>
+    
+    <div id="status"></div>
+  </div>
+  
+  <script>
+    let selectedUrl = null;
+    const options = document.querySelectorAll('.option');
+    const btnConfirm = document.getElementById('btnConfirm');
+    const status = document.getElementById('status');
+    
+    // 默认选中第一个（推荐）
+    options[0].classList.add('selected');
+    selectedUrl = options[0].dataset.url;
+    btnConfirm.disabled = false;
+    
+    options.forEach(option => {
+      option.addEventListener('click', () => {
+        options.forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedUrl = option.dataset.url;
+        btnConfirm.disabled = false;
+      });
+    });
+    
+    btnConfirm.addEventListener('click', async () => {
+      if (!selectedUrl) return;
+      
+      btnConfirm.disabled = true;
+      btnConfirm.textContent = '正在测试连接...';
+      
+      // 测试连接
+      try {
+        const response = await fetch(selectedUrl + '/healthz', { 
+          method: 'GET',
+          mode: 'cors'
+        });
+        
+        if (response.ok) {
+          // 保存配置
+          localStorage.setItem('SERVER_BASE', selectedUrl);
+          localStorage.setItem('SERVER_MODE', '1');
+          
+          status.className = 'status success';
+          status.textContent = '✅ 连接测试成功！配置已保存，3秒后跳转到主页面...';
+          
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 3000);
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (error) {
+        status.className = 'status error';
+        status.textContent = `❌ 连接失败: ${error.message}\n\n如果是 HTTPS 页面，请在浏览器设置中允许不安全内容，或选择 Nginx 反向代理方式`;
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = '重试';
+      }
+    });
+    
+    // 页面加载时检查当前配置
+    window.addEventListener('load', () => {
+      const currentBase = localStorage.getItem('SERVER_BASE');
+      const currentMode = localStorage.getItem('SERVER_MODE');
+      
+      if (currentBase && currentMode === '1') {
+        status.className = 'status success';
+        status.innerHTML = `当前已配置: <strong>${currentBase}</strong><br>点击确认按钮可重新测试连接`;
+      }
+    });
+  </script>
+</body>
+</html>

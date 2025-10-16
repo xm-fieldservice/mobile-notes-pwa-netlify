@@ -50,7 +50,11 @@
     document.addEventListener('click', (e) => {
       if (e.target && e.target.id === 'btnConnectServer') {
         addLog('✅ 按钮点击事件触发成功');
-        const serverBase = prompt('请输入服务器地址（例如：http://172.19.128.194:3000）', 'http://172.19.128.194:3000');
+        // 默认使用同源 /api/ 路径，避免 HTTPS 混合内容问题
+        const defaultServer = location.protocol === 'https:' ? 
+          (location.origin + '/api') : 
+          'http://172.19.128.194:3000';
+        const serverBase = prompt('请输入服务器地址\n\n推荐使用同源路径避免混合内容问题：\n' + location.origin + '/api\n\n或直接输入后端地址：', defaultServer);
         if (serverBase && serverBase.trim()) {
           localStorage.setItem('SERVER_BASE', serverBase.trim());
           localStorage.setItem('SERVER_MODE', '1');
