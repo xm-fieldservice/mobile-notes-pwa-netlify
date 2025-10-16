@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>连接服务器测试</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
+    button { padding: 1rem 2rem; font-size: 1rem; cursor: pointer; margin: 0.5rem; }
+    .success { background: #22c55e; color: white; border: none; border-radius: 8px; }
+    .test { background: #3b82f6; color: white; border: none; border-radius: 8px; }
+    pre { background: #f3f4f6; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    .status { padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+    .status.ok { background: #dcfce7; border: 1px solid #22c55e; }
+    .status.error { background: #fee2e2; border: 1px solid #ef4444; }
+  </style>
+</head>
+<body>
+  <h1>🔗 连接服务器功能测试</h1>
+  
+  <div id="status"></div>
+  
+  <h2>测试步骤</h2>
+  <ol>
+    <li><button id="btnConnectServer" class="test">🔗 点击测试"连接服务器"按钮</button></li>
+    <li><button id="btnTestAPI" class="test">🧪 测试后端 API 连通性</button></li>
+    <li><button id="btnCheckStorage" class="test">📦 检查 localStorage 配置</button></li>
+    <li><button id="btnSubmitTest" class="success">✅ 提交测试笔记到服务器</button></li>
+  </ol>
+  
+  <h2>日志输出</h2>
+  <pre id="log"></pre>
+  
+  <script>
+    const log = document.getElementById('log');
+    const status = document.getElementById('status');
+    
+    function addLog(msg) {
+      const timestamp = new Date().toLocaleTimeString();
+      log.textContent += `[${timestamp}] ${msg}\n`;
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    function showStatus(msg, isOk) {
+      status.className = `status ${isOk ? 'ok' : 'error'}`;
+      status.textContent = msg;
+    }
+    
+    // 测试 1: 连接服务器按钮（模拟实际功能）
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'btnConnectServer') {
+        addLog('✅ 按钮点击事件触发成功');
+        const serverBase = prompt('请输入服务器地址（例如：http://172.19.128.194:3000）', 'http://172.19.128.194:3000');
+        if (serverBase && serverBase.trim()) {
+          localStorage.setItem('SERVER_BASE', serverBase.trim());
+          localStorage.setItem('SERVER_MODE', '1');
+          addLog(`✅ 已保存配置: ${serverBase.trim()}`);
+          showStatus('✅ 服务器配置成功！可以刷新页面启用服务器模式', true);
+        } else {
+          addLog('❌ 用户取消或输入为空');
+        }
+      }
+    });
+    
+    // 测试 2: API 连通性
+    document.getElementById('btnTestAPI').addEventListener('click', async () => {
+      addLog('开始测试后端 API...');
+      const serverBase = localStorage.getItem('SERVER_BASE') || 'http://172.19.128.194:3000';
+      
+      try {
+        const response = await fetch(`${serverBase}/healthz`);
+        if (response.ok) {
+          const data = await response.json();
+          addLog(`✅ 后端健康检查通过: ${JSON.stringify(data)}`);
+          showStatus('✅ 后端服务正常运行', true);
+        } else {
+          addLog(`❌ 后端返回错误: ${response.status}`);
+          showStatus(`❌ 后端返回 HTTP ${response.status}`, false);
+        }
+      } catch (error) {
+        addLog(`❌ 连接失败: ${error.message}`);
+        showStatus(`❌ 无法连接到后端: ${error.message}`, false);
+      }
+    });
+    
+    // 测试 3: 检查 localStorage
+    document.getElementById('btnCheckStorage').addEventListener('click', () => {
+      const serverBase = localStorage.getItem('SERVER_BASE');
+      const serverMode = localStorage.getItem('SERVER_MODE');
+      
+      addLog('=== localStorage 配置 ===');
+      addLog(`SERVER_BASE: ${serverBase || '(未设置)'}`);
+      addLog(`SERVER_MODE: ${serverMode || '(未设置)'}`);
+      
+      if (serverBase && serverMode === '1') {
+        showStatus('✅ 服务器模式已启用', true);
+      } else {
+        showStatus('⚠️ 服务器模式未启用，请先点击"连接服务器"按钮配置', false);
+      }
+    });
+    
+    // 测试 4: 提交测试笔记
+    document.getElementById('btnSubmitTest').addEventListener('click', async () => {
+      const serverBase = localStorage.getItem('SERVER_BASE') || 'http://172.19.128.194:3000';
+      const serverMode = localStorage.getItem('SERVER_MODE');
+      
+      if (serverMode !== '1') {
+        showStatus('❌ 请先启用服务器模式', false);
+        addLog('❌ 服务器模式未启用，请先配置');
+        return;
+      }
+      
+      addLog('开始提交测试笔记...');
+      
+      const testNote = {
+        topic_id: 'test-from-debug-page',
+        final_md: `# 测试笔记\n\n这是从调试页面提交的测试笔记。\n\n时间: ${new Date().toLocaleString()}\n\n功能验证:\n- ✅ 按钮点击事件\n- ✅ localStorage 配置\n- ✅ API 连通性\n- ✅ 数据提交`,
+        mode: 'note',
+        team_config_path: null,
+        policy: {
+          index_vector: 0,
+          index_graphrag: 0,
+          index_table: 0
+        }
+      };
+      
+      try {
+        const response = await fetch(`${serverBase}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testNote)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          addLog(`✅ 提交成功！`);
+          addLog(`note_id: ${result.note_id}`);
+          addLog(`db_status: ${result.db_status}`);
+          showStatus(`✅ 测试笔记已成功写入服务器！note_id: ${result.note_id}`, true);
+        } else {
+          addLog(`❌ 提交失败: HTTP ${response.status}`);
+          showStatus(`❌ 提交失败: HTTP ${response.status}`, false);
+        }
+      } catch (error) {
+        addLog(`❌ 提交出错: ${error.message}`);
+        showStatus(`❌ 提交出错: ${error.message}`, false);
+      }
+    });
+    
+    // 页面加载时自动检查配置
+    window.addEventListener('load', () => {
+      addLog('=== 调试页面已加载 ===');
+      addLog('页面 URL: ' + location.href);
+      
+      const serverBase = localStorage.getItem('SERVER_BASE');
+      const serverMode = localStorage.getItem('SERVER_MODE');
+      
+      if (serverBase && serverMode === '1') {
+        addLog(`✅ 服务器模式已启用: ${serverBase}`);
+        showStatus('✅ 服务器模式已启用，可以直接测试', true);
+      } else {
+        addLog('⚠️ 服务器模式未启用，请先点击"连接服务器"按钮配置');
+        showStatus('⚠️ 请先点击"连接服务器"按钮配置', false);
+      }
+    });
+  </script>
+</body>
+</html>
