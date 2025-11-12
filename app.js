@@ -371,7 +371,8 @@ function initMinimalPersistenceUI(){
     // 最近提交列表追加
     if (recentList){
       const li = document.createElement('li');
-      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem;';
+      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem; cursor:pointer;';
+      li.dataset.content = val;
       const title = mdFirstLine(val) || '未命名笔记';
       const excerpt = mdExcerpt(val);
       li.innerHTML = `<div><strong>${title}</strong></div><div style="opacity:.8; font-size:.9em;">${excerpt}</div>`;
@@ -391,6 +392,17 @@ function initMinimalPersistenceUI(){
 
   composeSubmit?.addEventListener('click', submitCurrentNote);
   // 移除组合键提交，仅保留按钮点击提交
+
+  // 右侧"刚提交"列表：点击任意项显示完整内容到输出框
+  recentList?.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li || !recentList.contains(li)) return;
+    const content = li.dataset.content || '';
+    if (outputBox) {
+      outputBox.textContent = content;
+      console.log('点击会话记录，输出框已更新');
+    }
+  });
 
   // 列表事件代理
   listEl?.addEventListener('click', async (e)=>{
