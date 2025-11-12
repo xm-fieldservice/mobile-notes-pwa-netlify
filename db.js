@@ -123,7 +123,11 @@
       req.onsuccess = ()=> resolve(req.result);
       req.onerror = ()=> reject(req.error);
     }));
-    await tx(STORES.topics, 'readwrite', (s)=> s.put({ ...(await tx(STORES.topics,'readonly',(st)=>st.get(topicId))), updatedAt: now }));
+    // 更新 topic 的 updatedAt
+    const topic = await tx(STORES.topics, 'readonly', (s)=> s.get(topicId));
+    if (topic) {
+      await tx(STORES.topics, 'readwrite', (s)=> s.put({ ...topic, updatedAt: now }));
+    }
     return { id, ...note };
   }
 
