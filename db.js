@@ -165,6 +165,18 @@
       const SERVER_MODE = (params.get('server') === '1') || (localStorage.getItem('SERVER_MODE') === '1');
       if (SERVER_MODE) {
         const base = localStorage.getItem('SERVER_BASE') || (location.protocol + '//' + location.hostname + ':3000');
+        
+        // 检测混合内容：HTTPS 页面不能访问 HTTP 后端
+        if (location.protocol === 'https:' && base.startsWith('http://')) {
+          console.warn('[DB] 混合内容警告：HTTPS 页面无法访问 HTTP 后端，已自动禁用服务器模式');
+          console.warn('[DB] 当前配置:', base);
+          console.warn('[DB] 解决方案：1) 清除配置使用本地模式  2) 配置 HTTPS 后端');
+          localStorage.removeItem('SERVER_MODE');
+          localStorage.removeItem('SERVER_BASE');
+          // 不启用服务器模式，使用默认的本地 IndexedDB
+          return;
+        }
+        
         const postJSON = async (path, payload) => {
           const r = await fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
           if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -179,7 +191,10 @@
         window.DB.listNotesByTopic = async () => { return []; };
         window.DB.deleteNote = async () => {};
         window.DB.toggleFavoriteNote = async () => {};
+        console.log('[DB] 服务器模式已启用:', base);
       }
-    }catch{}
+    }catch(e){
+      console.error('[DB] 服务器模式初始化失败:', e);
+    }
   })();
 })();
