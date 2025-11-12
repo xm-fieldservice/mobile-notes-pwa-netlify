@@ -377,6 +377,8 @@ function initMinimalPersistenceUI(){
       const excerpt = mdExcerpt(val);
       li.innerHTML = `<div><strong>${title}</strong></div><div style="opacity:.8; font-size:.9em;">${excerpt}</div>`;
       recentList.prepend(li);
+      // 持久化到 localStorage
+      saveRecentList();
     }
     // 清空输入
     if (composeInput) composeInput.value = '';
@@ -428,6 +430,50 @@ function initMinimalPersistenceUI(){
       setTimeout(()=> btn.textContent = '⧉ 复制', 1000);
     }
   });
+
+  // 页面加载时恢复最近提交列表
+  loadRecentList();
+}
+
+// 持久化最近提交列表
+function saveRecentList() {
+  const recentEl = document.querySelector('#recent-submits');
+  if (!recentEl) return;
+  
+  const items = Array.from(recentEl.children).map(li => ({
+    content: li.dataset.content,
+    title: li.querySelector('strong')?.textContent || '未命名笔记',
+    excerpt: li.querySelector('div:last-child')?.textContent || ''
+  }));
+  
+  localStorage.setItem('recentSubmissions', JSON.stringify(items));
+  console.log('最近提交列表已保存到 localStorage');
+}
+
+// 恢复最近提交列表
+function loadRecentList() {
+  const recentEl = document.querySelector('#recent-submits');
+  if (!recentEl) return;
+  
+  try {
+    const saved = localStorage.getItem('recentSubmissions');
+    if (!saved) return;
+    
+    const items = JSON.parse(saved);
+    recentEl.innerHTML = '';
+    
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.style.cssText = 'background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.5rem; cursor:pointer;';
+      li.dataset.content = item.content;
+      li.innerHTML = `<div><strong>${item.title}</strong></div><div style="opacity:.8; font-size:.9em;">${item.excerpt}</div>`;
+      recentEl.appendChild(li);
+    });
+    
+    console.log('已从 localStorage 恢复', items.length, '条会话记录');
+  } catch (e) {
+    console.error('恢复最近提交列表失败:', e);
+  }
 }
 
 (function initVersionLog(){
